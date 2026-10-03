@@ -7,17 +7,18 @@ Python version tested:
 
 Team members and concrete contributions
 ---------------------------------------
-Name:
+Name: Linder
 Contribution:
 
-Name:
+Name: Monika
 Contribution:
 
-Name:
+Name: Olha
 Contribution:
 
-Name (if applicable):
+Name (if applicable): Youyue (Avery)
 Contribution:
+- Task 0
 
 Architecture
 ------------
