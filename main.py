@@ -1,4 +1,6 @@
-"""HarborFlow Assignment 2 starter entry point."""
+import json
+import os
+import ast
 
 def display_menu():
     console_name = "HARBORFLOW PORT INTELLIGENCE"
@@ -14,11 +16,24 @@ def display_menu():
 10. Close console'''
     print(f'''{console_name}\n{console_menu}''')
 
+path = "dataset/vessels/"
+
+#def list_files():
+#    return os.listdir()
+
 
 def main():
     """Run the HarborFlow Port Intelligence Console."""
     # TODO: implement the persistent menu and orchestrate the services.
+#    print(list_files(path))
 
+    for file in os.listdir(path):
+        content = open(path + file, "r").read()
+        try:
+            print(ast.literal_eval(content)["name"])
+        except:
+            print("Damaged Record")
+    
     running = True
 
     while running:
@@ -31,6 +46,7 @@ def main():
             continue
 
         if selected_service == 1:
+
             #List registered vessels
             pass
         
@@ -43,6 +59,7 @@ def main():
             pass
         
         elif selected_service == 4:
+
             #Export a customer operations profile
             pass
         
