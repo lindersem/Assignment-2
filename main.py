@@ -1,6 +1,8 @@
 import json
 import os
 import ast
+from data_access import load_vessels
+
 
 def display_menu():
     console_name = "HARBORFLOW PORT INTELLIGENCE"
@@ -16,23 +18,19 @@ def display_menu():
 10. Close console'''
     print(f'''{console_name}\n{console_menu}''')
 
-path = "dataset/vessels/"
+def list_registered_vessels(valid_vessels, skipped_vessel_file):
+    print("Register HarborFlow vessels: ")
 
-#def list_files():
-#    return os.listdir()
+    for valid_vessel in valid_vessels: 
+        list_valid_vessel = f"- {valid_vessel['name']}  |  IMO {valid_vessel['imo']}  |  {valid_vessel['capacity_teu']:,} TEU"
+        print(list_valid_vessel)
+    
+    print(f"Skipped vessel files: {skipped_vessel_file}")
 
 
 def main():
     """Run the HarborFlow Port Intelligence Console."""
     # TODO: implement the persistent menu and orchestrate the services.
-#    print(list_files(path))
-
-    for file in os.listdir(path):
-        content = open(path + file, "r").read()
-        try:
-            print(ast.literal_eval(content)["name"])
-        except:
-            print("Damaged Record")
     
     running = True
 
@@ -46,9 +44,9 @@ def main():
             continue
 
         if selected_service == 1:
-
             #List registered vessels
-            pass
+            valid_vessels, skipped_vessel_file = load_vessels("dataset/vessels/")
+            list_registered_vessels(valid_vessels, skipped_vessel_file)
         
         elif selected_service == 2:
             #Inspect a vessel manifest
