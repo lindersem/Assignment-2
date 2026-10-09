@@ -22,8 +22,8 @@ def list_registered_vessels(valid_vessels, skipped_vessel_file):
     print("Register HarborFlow vessels: ")
 
     for valid_vessel in valid_vessels: 
-        list_valid_vessel = f"- {valid_vessel['name']}  |  IMO {valid_vessel['imo']}  |  {valid_vessel['capacity_teu']:,} TEU"
-        print(list_valid_vessel)
+        list_vessels = f"- {valid_vessel['name']}  |  IMO {valid_vessel['imo']}  |  {valid_vessel['capacity_teu']:,} TEU"
+        print(list_vessels)
     
     print(f"Skipped vessel files: {skipped_vessel_file}")
 
@@ -94,3 +94,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
