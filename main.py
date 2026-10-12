@@ -115,9 +115,9 @@ def main():
             pass
 
         elif selected_service == 4:
-
             # Export a customer operations profile
-            pass
+            customer_input = input("Customer name: ")
+            operations.export_customer_operations_profile(customer_input)
 
         elif selected_service == 5:
             # Find port calls by month

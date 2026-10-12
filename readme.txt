@@ -9,6 +9,7 @@ Team members and concrete contributions
 ---------------------------------------
 Name: Linder
 Contribution:
+- Task 4 (Export a customer operations profile)
 
 Name: Monika
 Contribution:

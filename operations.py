@@ -5,6 +5,8 @@ where practical.
 """
 
 import json
+import csv
+import os
 import data_access
 from datetime import datetime
 
@@ -71,3 +73,85 @@ def resolve_manifest(call_id):
         "missing_count": missing_count,
         "declared_count": len(shipment_ids),
     }
+
+
+def export_customer_operations_profile(customer_input):
+    customer_input = customer_input.strip().lower()
+
+    # --- Part 2: Find all shipments for this customer, return list of dictionaries---
+    matching_shipments = []
+    for file in os.listdir("dataset/shipments"):
+        try:
+            shipment = data_access.load_json("dataset/shipments/" + file)
+            if shipment["customer"].strip().lower() == customer_input:
+                matching_shipments.append(shipment)
+        except:
+            continue
+
+    # --- Part 3: Validate if any were found ---
+    if not matching_shipments:  # if list is empty
+        print("Customer not found.")
+        return
+
+    # --- Part 4: Calculate profile statistics ---
+    shipment_count = len(matching_shipments)
+    total_weight_kg = 0.0
+    express_count = 0
+    destinations = []
+
+    for shipment in matching_shipments:
+        total_weight_kg += shipment["weight_kg"]
+        if shipment["priority"] == "EXPRESS":
+            express_count += 1
+        destinations.append(shipment["destination"])
+
+    # Clean destinations, remove duplicates and sort
+    clean_destinations = "|".join(sorted(set(destinations)))
+    first_shipment = matching_shipments[0]
+    customer_name = first_shipment["customer"]
+    customer_dictionary_output = {
+        "customer": customer_name,
+        "shipment_count": shipment_count,
+        "total_weight_kg": f"{total_weight_kg:.2f}",
+        "express_count": express_count,
+        "destinations": clean_destinations,
+    }
+
+    # --- Part 5: Write exports, if customer exists update or append to customer-profiles.csv ---
+    # Use an in-memory list to update the CSV safely:
+    # Text files on disk cannot be edited in-place when row lengths change.
+    # As required by the spec, we read existing rows into memory, replace
+    # matching customer data (or keep other customers untouched), and rewrite safely.
+    existing_rows = []
+    customer_found = False
+    csv_path = "exports/customer-profiles.csv"
+
+    if os.path.exists(csv_path):
+        with open(csv_path, "r", newline="", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row["customer"].strip().lower() == customer_input:
+                    existing_rows.append(customer_dictionary_output)
+                    customer_found = True
+                else:
+                    existing_rows.append(row)
+
+    # If brand new customer, append their row to the list
+    if not customer_found:
+        existing_rows.append(customer_dictionary_output)
+
+    # Ensure exports directory exists and write back to CSV safely
+    os.makedirs("exports", exist_ok=True)
+    fieldnames = [
+        "customer",
+        "shipment_count",
+        "total_weight_kg",
+        "express_count",
+        "destinations",
+    ]
+    with open(csv_path, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(existing_rows)
+
+    print("Customer profile updated: exports/customer-profiles.csv")
