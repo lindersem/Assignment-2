@@ -10,7 +10,6 @@ import os
 import data_access
 from datetime import datetime
 
-
 def get_vessel_by_name(name):
     vessel = data_access.find_json_record("dataset/vessels", "name", name)
     if vessel:
@@ -74,7 +73,7 @@ def resolve_manifest(call_id):
         "declared_count": len(shipment_ids),
     }
 
-
+#Task 4
 def export_customer_operations_profile(customer_input):
     customer_input = customer_input.strip().lower()
 
@@ -155,3 +154,52 @@ def export_customer_operations_profile(customer_input):
         writer.writerows(existing_rows)
 
     print("Customer profile updated: exports/customer-profiles.csv")
+
+# Task 5: Find port calls by month
+
+def sort_by_date_and_vessel(call): #gives .sort() the functions so it can sort
+    return (call["arrival_date"], call["vessel_name"])
+
+def find_port_calls_by_month(month):
+    # --- PART 1: LOAD DATA ---
+    all_calls = data_access.load_csv("dataset/port_calls.csv")
+    matching_calls = []
+
+    # --- PART 2: FILTER CALLS FOR THIS MONTH ---
+    for call in all_calls:
+        date_string = call["arrival_date"]
+        vessel_id = call["vessel_id"]
+        # Skip bad dates
+        if not is_valid_date(date_string):
+            continue
+
+        # Look up the ship
+        vessel = data_access.find_json_record("dataset/vessels", "vessel_id", vessel_id)
+        if vessel is None:
+            continue
+
+        # Check if month matches
+        date_object = datetime.strptime(date_string, "%Y-%m-%d")
+        if date_object.month == month:
+            call["vessel_name"] = vessel["name"]
+            matching_calls.append(call)
+
+    # --- PART 3: CHECK IF EMPTY ---
+    if len(matching_calls) == 0:
+        print("No port calls found.")
+        return None
+    
+    # --- PART 4: SORT by using function---
+    matching_calls.sort(key=sort_by_date_and_vessel)
+
+    # --- PART 5: PRINT RESULTS ---
+    month_name = datetime(2026, month, 1).strftime("%B")
+    print(f"Port calls in {month_name}:")
+    for call in matching_calls:
+        date_object = datetime.strptime(call["arrival_date"], "%Y-%m-%d")
+        clean_date = date_object.strftime("%d %B %Y")
+        ship_name = call["vessel_name"]
+        port = call["port_code"]
+        call_id = call["call_id"]
+        print(f"- {clean_date} | {ship_name} | {port} | {call_id}")
+

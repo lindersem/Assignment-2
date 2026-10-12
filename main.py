@@ -121,7 +121,17 @@ def main():
 
         elif selected_service == 5:
             # Find port calls by month
-            pass
+            while True:
+                month_input = input("Month (1-12): ")
+                try:
+                    month = int(month_input)
+                    if 1 <= month <= 12:
+                        operations.find_port_calls_by_month(month)
+                        break
+                    else:
+                        print("Error - Enter a month from 1 to 12.")
+                except ValueError:
+                    print("Error - Enter a month from 1 to 12.")
 
         elif selected_service == 6:
             # Sanitize an incident report

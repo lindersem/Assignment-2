@@ -10,6 +10,7 @@ Team members and concrete contributions
 Name: Linder
 Contribution:
 - Task 4 (Export a customer operations profile)
+- Task 5 (Find port calls by month)
 
 Name: Monika
 Contribution:
