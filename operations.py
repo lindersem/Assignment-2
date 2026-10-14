@@ -80,13 +80,10 @@ def export_customer_operations_profile(customer_input):
 
     # --- Part 2: Find all shipments for this customer, return list of dictionaries---
     matching_shipments = []
-    for file in os.listdir("dataset/shipments"):
-        try:
-            shipment = data_access.load_json("dataset/shipments/" + file)
-            if shipment["customer"].strip().lower() == customer_input:
-                matching_shipments.append(shipment)
-        except:
-            continue
+    shipments = data_access.load_every_json("dataset/shipments")
+    for shipment in shipments:
+        if shipment["customer"].strip().lower() == customer_input:
+            matching_shipments.append(shipment)
 
     # --- Part 3: Validate if any were found ---
     if not matching_shipments:  # if list is empty
@@ -157,7 +154,6 @@ def export_customer_operations_profile(customer_input):
     print("Customer profile updated: exports/customer-profiles.csv")
 
 # Task 5: Find port calls by month
-
 def sort_by_date_and_vessel(call): #gives .sort() the functions so it can sort
     return (call["arrival_date"], call["vessel_name"])
 
