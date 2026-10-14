@@ -7,6 +7,13 @@ import json
 import csv
 import os
 
+def load_every_json(path):
+    all_json = []
+    for incident_filename in os.listdir(path):
+        full_path = os.path.join(path, incident_filename)
+        all_json.append(load_json(full_path))
+    return all_json
+
 
 def load_json(path):
     with open(path, "r") as file:

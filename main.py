@@ -4,6 +4,8 @@ import os
 import ast
 import data_access, operations
 from datetime import datetime
+import text_tools
+
 
 
 def display_menu():
@@ -135,6 +137,36 @@ def main():
 
         elif selected_service == 6:
             # Sanitize an incident report
+            incidents = data_access.load_every_json("dataset/incidents")
+            sorted_incidents = sorted(incidents, key=lambda x: x['title'].lower())
+            i = 1
+
+            for incident in sorted_incidents:
+                print(f"{i}. {incident["title"]}")
+                i += 1
+
+            while True:
+                try:
+                    incident_number = int(input("Incident number: "))
+                    if incident_number >0 and incident_number <= len(sorted_incidents):
+                        sanitized_text = text_tools.sanitize(sorted_incidents[incident_number-1]["report"])
+                        if sanitized_text == sorted_incidents[incident_number-1]["report"]:
+                            print("Incident contains no share-sensitive identifiers.")
+                        else:
+                            file_path = f"exports/sanitized/{sorted_incidents[incident_number-1]["incident_id"]}-sanitized.txt"
+
+                            # 1. Extract the directory portion and create it if missing
+                            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+                            # 2. Open and create the file
+                            with open(file_path, "w") as f:
+                                f.write(f"{sanitized_text}")
+                        break
+                    else:
+                        print("Error - Select a listed incident.")
+
+                except ValueError:
+                    print("Error - Select a listed incident.")
             pass
 
         elif selected_service == 7:

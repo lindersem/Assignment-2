@@ -10,6 +10,7 @@ import os
 import data_access
 from datetime import datetime
 
+
 def get_vessel_by_name(name):
     vessel = data_access.find_json_record("dataset/vessels", "name", name)
     if vessel:
