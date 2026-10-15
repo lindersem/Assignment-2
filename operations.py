@@ -74,6 +74,60 @@ def resolve_manifest(call_id):
         "declared_count": len(shipment_ids),
     }
 
+#task 3
+def classify_shipment(shipment):
+    """Classify a single shipment dictionary into a category and reason."""
+    if shipment.get("hazardous", False):
+        return "CONTROLLED", "hazardous cargo"
+    elif shipment.get("temperature_controlled", False):
+        return "COLD CHAIN", "temperature-controlled cargo"
+    elif shipment.get("priority") == "EXPRESS" or shipment.get("weight_kg", 0) >= 5000:
+        return "EXPEDITE", "express service"
+    return "STANDARD", "standard cargo"
+
+
+def process_priority_cargo(call_id_input):
+    """Validate call, load manifest, classify shipments, and return results."""
+    # Clean up user input (remove extra spaces and handle lowercase/uppercase)
+    call_id_input = call_id_input.strip()
+    
+    # 1. Validate port call against port_calls.csv
+    port_call = data_access.find_csv_record("dataset/port_calls.csv", "call_id", call_id_input)
+    if not port_call:
+        return {"error": "Port call not found."}
+    
+    # 2. Try loading the manifest (using lowercase call_id to match file naming conventions)
+    manifest_path = f"dataset/manifests/{port_call['call_id'].lower()}.json"
+    try:
+        manifest = data_access.load_json(manifest_path)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"error": "Manifest unavailable."}
+    
+    if not manifest or "shipment_ids" not in manifest:
+        return {"error": "Manifest unavailable."}
+    
+    # 3. Resolve and classify shipments
+    shipment_results = []
+    category_counts = {"CONTROLLED": 0, "COLD CHAIN": 0, "EXPEDITE": 0, "STANDARD": 0}
+    
+    for shipment_id in manifest.get("shipment_ids", []):
+        shipment = data_access.find_json_record("dataset/shipments", "shipment_id", shipment_id)
+        if shipment:
+            category, reason = classify_shipment(shipment)
+            shipment_results.append({
+                "shipment_id": shipment_id,
+                "category": category,
+                "reason": reason
+            })
+            if category in category_counts:
+                category_counts[category] += 1
+                
+    return {
+        "call_id": port_call["call_id"],
+        "shipments": shipment_results,
+        "counts": category_counts
+    }
+
 #Task 4
 def export_customer_operations_profile(customer_input):
     customer_input = customer_input.strip().lower()

@@ -114,7 +114,28 @@ def main():
 
         elif selected_service == 3:
             # Identify priority cargo
-            pass
+            call_id_input = input("Enter Call ID: ").strip()
+                        
+            # Call the orchestration function from operations.py
+            result = operations.process_priority_cargo(call_id_input)
+                        
+            # Handle errors returned from operations.py
+            if "error" in result:
+                print(result["error"])
+            else:
+                # Print the success output
+                print(f"\nPriority Cargo Report for Call ID: {result['call_id']}")
+                print("-" * 80)
+                            
+                for item in result["shipments"]:
+                    print(f"Shipment ID: {item['shipment_id']} | Category: {item['category']} | Reason: {item['reason']}")
+                    
+                print("-" * 80)
+                print("Category Totals:")
+                for category, count in result["counts"].items():
+                    print(f"- {category}: {count}")
+
+            
 
         elif selected_service == 4:
             # Export a customer operations profile
