@@ -88,15 +88,16 @@ def main():
 
         if selected_service == 1:
             # List registered vessels
-            valid_vessels, skipped_vessel_file = data_access.load_vessels(
-                "dataset/vessels/"
-            )
+            valid_vessels, skipped_vessel_file = data_access.load_vessels("dataset/vessels/")
             list_registered_vessels(valid_vessels, skipped_vessel_file)
 
         elif selected_service == 2:
             # Inspect a vessel manifest
             vessels = data_access.list_registered_vessels("dataset/vessels/")
             display_vessel_selection_list(vessels)
+            #Avery: reuse functions of task 1 for task 2
+            #valid_vessels, _ = data_access.load_vessels("dataset/vessels/")
+            #display_vessel_selection_list(vessels)
             vessel_input = input("Vessel name: ").strip().lower()
             vessel = operations.get_vessel_by_name(vessel_input)
             # validate vessel name input

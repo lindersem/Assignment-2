@@ -6,12 +6,32 @@ Create reusable JSON and CSV loaders here. Do not hard-code sample records.
 import json
 import csv
 import os
+import data_access
+from datetime import datetime
 
 
 # task 1
 def load_json(path):
     with open(path, "r") as file:
         return json.load(file)
+
+# Generalize load_json(), part of load_vessels()for task 1, 
+# load_every_json() for task 4
+# find_json_record(), list_registered_vessels() task 2: 
+def generalised_load_json(path):
+    skipped_file = 0
+    contents = []
+    for filename in os.listdir(path):
+        if filename.endswith('.json'):
+            full_path = os.path.join(path, filename)
+            try:
+                with open(full_path,"r") as file:
+                    content = json.load(file)
+                    contents.append(content)
+            except (json.JSONDecodeError, FileNotFoundError):
+                skipped_file += 1
+                print(f"Invalid json file {filename}")
+    return contents, skipped_file
 
 
 # task 2
@@ -30,33 +50,20 @@ def load_every_json(path):
         return all_json
 
 
-# task 1
+# task 1 - modified and merged with ist_registered_vessels(directory):
 def load_vessels(directory):
     valid_vessels = []
-    skipped_vessel_file = 0
     required_keys = ["vessel_id", "name", "imo", "capacity_teu"]
-    for vessels_filename in os.listdir(directory):
-        # get path by directory + filename
-        path = os.path.join(directory, vessels_filename)
-        try:
-            vessel = load_json(path)
-            valid = True
-            for i in required_keys:
-                if i not in vessel:
-                    valid = False
-                    break
+    contents, skipped_file = generalised_load_json(directory)
+    for vessel in contents:
+        if all(key in vessel for key in required_keys):
+            valid_vessels.append(vessel)
+        else:
+            skipped_file += 1
+            print("Missing required field")
 
-            if valid:
-                valid_vessels.append(vessel)
-            else:
-                skipped_vessel_file += 1
-                print(f"Missing required field: {vessels_filename}")
-
-        except json.JSONDecodeError:
-            skipped_vessel_file += 1
-            print(f"Invalid JSON file: {vessels_filename}")
     valid_vessels.sort(key=lambda vessel: vessel["name"].lower())
-    return valid_vessels, skipped_vessel_file
+    return valid_vessels, skipped_file
 
 
 # task 2
@@ -84,9 +91,21 @@ def find_json_record(directory, key, value):
             except json.JSONDecodeError:
                 continue
     return None
+#Avery: reuse functions of task 1 for task 2
+def find_json_record_2(directory, key, value):
+    contents, _ = generalised_load_json(directory)
+    for record in contents:
+        if (
+            record
+            and record.get(key)
+            and str(record.get(key)).lower() == str(value).lower()
+        ):
+            return record
+    return None
 
 
 # task 2
+# Avery: Repeat task 1
 def list_registered_vessels(directory):
     valid_vessels = []
     required_keys = ["vessel_id", "name", "imo", "capacity_teu"]
@@ -102,3 +121,46 @@ def list_registered_vessels(directory):
 
     valid_vessels.sort(key=lambda v: v["name"].lower())
     return valid_vessels
+
+
+# task 2 (Avery: Move to dataaccess?)
+def get_vessel_by_name(name):
+    vessel = data_access.find_json_record("dataset/vessels", "name", name)
+    if vessel:
+        return vessel
+    return None
+
+
+# task 2 (Avery: Move to dataaccess?)
+def is_valid_date(date_string):  # YYYY-MM-DD
+    try:
+        datetime.strptime(date_string, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+# task 8 (sharing a part from task2)
+def validate_vessel_input():
+    vessel_input = input("Vessel name: ").strip().lower()
+    vessel = find_json_record("dataset/vessels", "name", vessel_input)
+    # validate vessel name input
+    if not vessel:
+        print("Vessel not found")
+        valid_vessel_input = False
+    else:
+        official_vessel_name = vessel["name"]
+        vessel_id = vessel["vessel_id"]
+        valid_vessel_input = True
+    return official_vessel_name, vessel_id, valid_vessel_input
+
+def validate_date_input():
+    date_is_valid = False
+    while not date_is_valid:
+        reference_date = input("Reference date: ").strip()
+        if is_valid_date(reference_date):
+            date_is_valid = True
+            return reference_date
+        else:
+            print("Error - Date must use YYYY-MM-DD")
+            date_is_valid = False

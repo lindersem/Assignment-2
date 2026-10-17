@@ -11,7 +11,7 @@ import data_access
 from datetime import datetime
 
 
-# task 2
+# task 2 (Avery: Move to dataaccess?)
 def get_vessel_by_name(name):
     vessel = data_access.find_json_record("dataset/vessels", "name", name)
     if vessel:
@@ -19,7 +19,7 @@ def get_vessel_by_name(name):
     return None
 
 
-# task 2
+# task 2 (Avery: Move to dataaccess?)
 def is_valid_date(date_string):  # YYYY-MM-DD
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
@@ -314,3 +314,18 @@ def get_sequence_for_port_call(call_id):
         "stable_sequence": sequence,
         "length": length,
     }
+
+# task 8 
+def assess_weather_risk():
+    _, vessel_id, _ = data_access.validate_vessel_input()
+    reference_date = data_access.validate_date_input()
+    uppcoming_call = find_earliest_call(vessel_id, reference_date)
+    if not uppcoming_call:
+        print("No upcoming port calls found")
+    else:
+        port_code = uppcoming_call["port_code"]
+        arrival_date = uppcoming_call["arrival_date"]
+    
+    row = data_access.find_csv_record("/dataset/weather.csv", "port_code", port_code)
+
+
