@@ -11,6 +11,7 @@ import data_access
 from datetime import datetime
 
 
+# task 2
 def get_vessel_by_name(name):
     vessel = data_access.find_json_record("dataset/vessels", "name", name)
     if vessel:
@@ -18,6 +19,7 @@ def get_vessel_by_name(name):
     return None
 
 
+# task 2
 def is_valid_date(date_string):  # YYYY-MM-DD
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
@@ -26,6 +28,7 @@ def is_valid_date(date_string):  # YYYY-MM-DD
         return False
 
 
+# task 2
 def find_earliest_call(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
@@ -44,6 +47,7 @@ def find_earliest_call(vessel_id, reference_date):  # date on or after
     return filtered_calls[0]
 
 
+# task 2
 def resolve_manifest(call_id):
     manifest_path = f"dataset/manifests/{call_id.lower()}.json"
     try:
@@ -74,7 +78,8 @@ def resolve_manifest(call_id):
         "declared_count": len(shipment_ids),
     }
 
-#task 3
+
+# task 3
 def classify_shipment(shipment):
     """Classify a single shipment dictionary into a category and reason."""
     if shipment.get("hazardous", False):
@@ -90,45 +95,48 @@ def process_priority_cargo(call_id_input):
     """Validate call, load manifest, classify shipments, and return results."""
     # Clean up user input (remove extra spaces and handle lowercase/uppercase)
     call_id_input = call_id_input.strip()
-    
+
     # 1. Validate port call against port_calls.csv
-    port_call = data_access.find_csv_record("dataset/port_calls.csv", "call_id", call_id_input)
+    port_call = data_access.find_csv_record(
+        "dataset/port_calls.csv", "call_id", call_id_input
+    )
     if not port_call:
         return {"error": "Port call not found."}
-    
+
     # 2. Try loading the manifest (using lowercase call_id to match file naming conventions)
     manifest_path = f"dataset/manifests/{port_call['call_id'].lower()}.json"
     try:
         manifest = data_access.load_json(manifest_path)
     except (FileNotFoundError, json.JSONDecodeError):
         return {"error": "Manifest unavailable."}
-    
+
     if not manifest or "shipment_ids" not in manifest:
         return {"error": "Manifest unavailable."}
-    
+
     # 3. Resolve and classify shipments
     shipment_results = []
     category_counts = {"CONTROLLED": 0, "COLD CHAIN": 0, "EXPEDITE": 0, "STANDARD": 0}
-    
+
     for shipment_id in manifest.get("shipment_ids", []):
-        shipment = data_access.find_json_record("dataset/shipments", "shipment_id", shipment_id)
+        shipment = data_access.find_json_record(
+            "dataset/shipments", "shipment_id", shipment_id
+        )
         if shipment:
             category, reason = classify_shipment(shipment)
-            shipment_results.append({
-                "shipment_id": shipment_id,
-                "category": category,
-                "reason": reason
-            })
+            shipment_results.append(
+                {"shipment_id": shipment_id, "category": category, "reason": reason}
+            )
             if category in category_counts:
                 category_counts[category] += 1
-                
+
     return {
         "call_id": port_call["call_id"],
         "shipments": shipment_results,
-        "counts": category_counts
+        "counts": category_counts,
     }
 
-#Task 4
+
+# Task 4
 def export_customer_operations_profile(customer_input):
     customer_input = customer_input.strip().lower()
 
@@ -207,9 +215,11 @@ def export_customer_operations_profile(customer_input):
 
     print("Customer profile updated: exports/customer-profiles.csv")
 
+
 # Task 5: Find port calls by month
-def sort_by_date_and_vessel(call): #gives .sort() the functions so it can sort
+def sort_by_date_and_vessel(call):  # gives .sort() the functions so it can sort
     return (call["arrival_date"], call["vessel_name"])
+
 
 def find_port_calls_by_month(month):
     # --- PART 1: LOAD DATA ---
@@ -239,7 +249,7 @@ def find_port_calls_by_month(month):
     if len(matching_calls) == 0:
         print("No port calls found.")
         return None
-    
+
     # --- PART 4: SORT by using function---
     matching_calls.sort(key=sort_by_date_and_vessel)
 
@@ -254,3 +264,53 @@ def find_port_calls_by_month(month):
         call_id = call["call_id"]
         print(f"- {clean_date} | {ship_name} | {port} | {call_id}")
 
+
+# task 7
+def get_longest_stable_sequence(event_codes):
+    start = 0
+    max_start = 0
+    max_length = 0
+    last_seen = {}
+
+    for end, code in enumerate(event_codes):
+        if code in last_seen and last_seen[code] >= start:
+            start = last_seen[code] + 1
+
+        last_seen[code] = end
+        current_length = end - start + 1
+
+        if current_length > max_length:
+            max_length = current_length
+            max_start = start
+
+    longest_seq = event_codes[max_start : max_start + max_length]
+    return longest_seq, max_length
+
+
+def get_sequence_for_port_call(call_id):
+    call_id = call_id.strip()
+
+    port_call = data_access.find_csv_record(
+        "dataset/port_calls.csv", "call_id", call_id
+    )
+    if not port_call:
+        return {"error": "Port call not found."}
+
+    manifest_path = f"dataset/manifests/{call_id.lower()}.json"
+    try:
+        manifest = data_access.load_json(manifest_path)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"error": "Manifest unavailable."}
+
+    if not manifest or "event_codes" not in manifest:
+        return {"error": "Manifest contains no event data."}
+
+    event_codes = manifest.get("event_codes", [])
+    sequence, length = get_longest_stable_sequence(event_codes)
+
+    return {
+        "call_id": call_id,
+        "all_codes": event_codes,
+        "stable_sequence": sequence,
+        "length": length,
+    }

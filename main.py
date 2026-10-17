@@ -7,7 +7,6 @@ from datetime import datetime
 import text_tools
 
 
-
 def display_menu():
     console_name = "HARBORFLOW PORT INTELLIGENCE"
     console_menu = """1. List registered vessels
@@ -23,6 +22,7 @@ def display_menu():
     print(f"""{console_name}\n{console_menu}""")
 
 
+# print task 1
 def list_registered_vessels(valid_vessels, skipped_vessel_file):
     print("Register HarborFlow vessels: ")
 
@@ -31,6 +31,13 @@ def list_registered_vessels(valid_vessels, skipped_vessel_file):
         print(list_vessels)
 
     print(f"Skipped vessel files: {skipped_vessel_file}")
+
+
+# print task 2
+def display_vessel_selection_list(vessels):
+    print("Registered vessels:")
+    for vessel in vessels:
+        print(f"- {vessel['name']}")
 
 
 def output_vessel_manifest(official_vessel_name, call_id, call_date, manifest_data):
@@ -52,6 +59,17 @@ def output_vessel_manifest(official_vessel_name, call_id, call_date, manifest_da
     print(f"Declared shipments: {manifest_data['declared_count']}")
     print(f"Resolved weight: {manifest_data['total_weight']:.2f} kg")
     print(f"Missing shipment records: {manifest_data['missing_count']}")
+
+
+# print task 7
+def print_stable_sequence_results(result):
+    all_codes = result["all_codes"]
+    sequence = result["stable_sequence"]
+    length = result["length"]
+
+    print(f"Event codes: {','.join(all_codes)}")
+    print(f"Longest stable sequence length: {length}")
+    print(f"Sequence: {' -> '.join(sequence)}")
 
 
 def main():
@@ -77,6 +95,8 @@ def main():
 
         elif selected_service == 2:
             # Inspect a vessel manifest
+            vessels = data_access.list_registered_vessels("dataset/vessels/")
+            display_vessel_selection_list(vessels)
             vessel_input = input("Vessel name: ").strip().lower()
             vessel = operations.get_vessel_by_name(vessel_input)
             # validate vessel name input
@@ -115,10 +135,10 @@ def main():
         elif selected_service == 3:
             # Identify priority cargo
             call_id_input = input("Enter Call ID: ").strip()
-                        
+
             # Call the orchestration function from operations.py
             result = operations.process_priority_cargo(call_id_input)
-                        
+
             # Handle errors returned from operations.py
             if "error" in result:
                 print(result["error"])
@@ -126,16 +146,16 @@ def main():
                 # Print the success output
                 print(f"\nPriority Cargo Report for Call ID: {result['call_id']}")
                 print("-" * 80)
-                            
+
                 for item in result["shipments"]:
-                    print(f"Shipment ID: {item['shipment_id']} | Category: {item['category']} | Reason: {item['reason']}")
-                    
+                    print(
+                        f"Shipment ID: {item['shipment_id']} | Category: {item['category']} | Reason: {item['reason']}"
+                    )
+
                 print("-" * 80)
                 print("Category Totals:")
                 for category, count in result["counts"].items():
                     print(f"- {category}: {count}")
-
-            
 
         elif selected_service == 4:
             # Export a customer operations profile
@@ -159,7 +179,7 @@ def main():
         elif selected_service == 6:
             # Sanitize an incident report
             incidents = data_access.load_every_json("dataset/incidents")
-            sorted_incidents = sorted(incidents, key=lambda x: x['title'].lower())
+            sorted_incidents = sorted(incidents, key=lambda x: x["title"].lower())
             i = 1
 
             for incident in sorted_incidents:
@@ -169,9 +189,14 @@ def main():
             while True:
                 try:
                     incident_number = int(input("Incident number: "))
-                    if incident_number >0 and incident_number <= len(sorted_incidents):
-                        sanitized_text = text_tools.sanitize(sorted_incidents[incident_number-1]["report"])
-                        if sanitized_text == sorted_incidents[incident_number-1]["report"]:
+                    if incident_number > 0 and incident_number <= len(sorted_incidents):
+                        sanitized_text = text_tools.sanitize(
+                            sorted_incidents[incident_number - 1]["report"]
+                        )
+                        if (
+                            sanitized_text
+                            == sorted_incidents[incident_number - 1]["report"]
+                        ):
                             print("Incident contains no share-sensitive identifiers.")
                         else:
                             file_path = f"exports/sanitized/{sorted_incidents[incident_number-1]["incident_id"]}-sanitized.txt"
@@ -192,7 +217,13 @@ def main():
 
         elif selected_service == 7:
             # Analyze the longest stable event sequence
-            pass
+            call_id_from_user = input("Port call ID: ").strip()
+            result = operations.get_sequence_for_port_call(call_id_from_user)
+
+            if "error" in result:
+                print(f"Error: {result['error']}")
+            else:
+                print_stable_sequence_results(result)
 
         elif selected_service == 8:
             # Assess weather risk for upcoming calls
