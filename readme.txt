@@ -37,10 +37,10 @@ Contribution:
 
 Architecture
 ------------
-main.py responsibilities:
-data_access.py responsibilities:
-operations.py responsibilities:
-text_tools.py responsibilities:
+main.py responsibilities: menu and orchestration
+data_access.py responsibilities: JSON/CSV loading, validation and paths
+operations.py responsibilities: manifests, classification, forecasts and exports
+text_tools.py responsibilities: regex sanitization, sequence and search index
 
 File and error-handling design
 ------------------------------
@@ -51,3 +51,4 @@ How generated files are updated safely:
 Known limitations
 -----------------
 Write "None known" or describe each known limitation.
+* JSON structure limitation: The program assumes that each JSON file contains a single dictionary (JSON object). Other JSON structures, such as arrays, are not supported.
