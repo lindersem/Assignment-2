@@ -73,6 +73,18 @@ def print_stable_sequence_results(result):
     print(f"Sequence: {' -> '.join(sequence)}")
 
 
+# print task 8
+def display_assess_weather_risk():
+    results = operations.assess_weather_risk()
+    if results is None:
+        return
+    for result in results:
+        display_assessment = f"""{result["vessel_name"]} | {result["port_code"]} | {result["arrival_date"]}
+Wind: {result["wind_kmh"]} km/h | Rain: {result["precipitation_mm"]} mm | Waves: {result["wave_height_m"]} m
+Recommendation: {" ".join(result["recommendations"])}"""
+        print(display_assessment)
+
+
 # print task 9
 def display_incident_search_results(query, matches):
     print(f"\nMatches for '{query}':")
@@ -244,8 +256,7 @@ def main():
                 print_stable_sequence_results(result)
 
         elif selected_service == 8:
-            # Assess weather risk for upcoming calls
-            pass
+            display_assess_weather_risk()
 
         elif selected_service == 9:
             # Search incident reports

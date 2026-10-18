@@ -150,7 +150,7 @@ def validate_vessel_input():
     # validate vessel name input
     if not vessel:
         print("Vessel not found")
-        valid_vessel_input = False
+        return None, None, False
     else:
         official_vessel_name = vessel["name"]
         vessel_id = vessel["vessel_id"]

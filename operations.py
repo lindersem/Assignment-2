@@ -29,6 +29,7 @@ def is_valid_date(date_string):  # YYYY-MM-DD
 
 
 # task 2
+# Avery: modified as find_upcoming_calls
 def find_earliest_call(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
@@ -296,17 +297,96 @@ def get_sequence_for_port_call(call_id):
 
 
 # task 8
-def assess_weather_risk():
-    _, vessel_id, _ = data_access.validate_vessel_input()
-    reference_date = data_access.validate_date_input()
-    uppcoming_call = find_earliest_call(vessel_id, reference_date)
-    if not uppcoming_call:
-        print("No upcoming port calls found")
-    else:
-        port_code = uppcoming_call["port_code"]
-        arrival_date = uppcoming_call["arrival_date"]
+def find_upcoming_calls(vessel_id, reference_date):  # date on or after
+    all_calls = data_access.load_csv("dataset/port_calls.csv")
 
-    row = data_access.find_csv_record("/dataset/weather.csv", "port_code", port_code)
+    filtered_calls = []
+    for call in all_calls:
+        # exclude invalid date 260230
+        try:
+            arrival_date = datetime.strptime(call["arrival_date"], "%Y-%m-%d").date()
+        except ValueError:
+            print(f"Invalid data: Arrival date {call['arrival_date']}")
+            continue
+
+        if (
+            call.get("vessel_id") == vessel_id
+            and arrival_date >= datetime.strptime(reference_date, "%Y-%m-%d").date()
+        ):
+            filtered_calls.append(call)
+
+    if not filtered_calls:
+        return None
+    filtered_calls.sort(key=lambda x: (x["arrival_date"], x["call_id"]))
+    return filtered_calls
+
+
+def assess_weather_risk():
+    official_vessel_name, vessel_id, valid_vessel_input = data_access.validate_vessel_input()
+    
+    if not valid_vessel_input:
+        return None
+    
+    reference_date = data_access.validate_date_input()
+    uppcoming_calls = find_upcoming_calls(vessel_id, reference_date)
+
+    if not uppcoming_calls:
+        print("No upcoming port calls found")
+        return None
+    
+    weather_rows = data_access.load_csv("dataset/weather.csv")
+    results = []
+
+    for upcoming_call in uppcoming_calls:
+        port_code = upcoming_call["port_code"]
+        arrival_date = upcoming_call["arrival_date"]
+        display_arrival_date = datetime.strptime(arrival_date,"%Y-%m-%d").strftime("%d %B %Y")
+
+        row = None
+        for weather in weather_rows:
+            if (
+                weather.get("date") == arrival_date
+                and weather.get("port_code") == port_code
+            ):
+                row = weather
+                break
+
+        if row is None:
+            print(f"Forecast unavailable for {port_code} on {arrival_date}.")
+            continue
+
+        try:
+            wind_kmh = float(row["wind_kmh"])
+            wave_height_m = float(row["wave_height_m"])
+            precipitation_mm = float(row["precipitation_mm"])
+        except ValueError:
+            print("Forecast unavailable.")
+            continue
+
+        recommendations = []
+
+        if wind_kmh >= 45:
+            recommendations.append("Suspend crane operations.")
+        if wave_height_m >= 2.5:
+            recommendations.append("Arrange tug assistance.")
+        if precipitation_mm >= 8 and wind_kmh < 45:
+            recommendations.append("Prepare covered handling. ")
+        if wind_kmh < 45 and wave_height_m < 2.5 and precipitation_mm < 8:
+            recommendations.append("Normal operating plan.")
+        
+        results.append({
+            "vessel_name": official_vessel_name,
+            "port_code": port_code,
+            "arrival_date": display_arrival_date,
+            "wind_kmh": wind_kmh,
+            "wave_height_m": wave_height_m,
+            "precipitation_mm": precipitation_mm,
+            "recommendations": recommendations
+        })
+
+    return results
+
+
 
 
 # task 9
