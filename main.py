@@ -40,6 +40,7 @@ def display_vessel_selection_list(vessels):
         print(f"- {vessel['name']}")
 
 
+# print task 2
 def output_vessel_manifest(official_vessel_name, call_id, call_date, manifest_data):
     print(f"Vessel name: {official_vessel_name}")
 
@@ -72,6 +73,20 @@ def print_stable_sequence_results(result):
     print(f"Sequence: {' -> '.join(sequence)}")
 
 
+# print task 9
+def display_incident_search_results(query, matches):
+    print(f"\nMatches for '{query}':")
+    print("-" * 60)
+
+    if not matches:
+        print("No matching incident reports found.")
+    else:
+        for incident_id, score, title in matches:
+            print(f"- {incident_id} | score {score} | {title}")
+
+    print("-" * 60)
+
+
 def main():
     """Run the HarborFlow Port Intelligence Console."""
 
@@ -88,16 +103,18 @@ def main():
 
         if selected_service == 1:
             # List registered vessels
-            valid_vessels, skipped_vessel_file = data_access.load_vessels("dataset/vessels/")
+            valid_vessels, skipped_vessel_file = data_access.load_vessels(
+                "dataset/vessels/"
+            )
             list_registered_vessels(valid_vessels, skipped_vessel_file)
 
         elif selected_service == 2:
             # Inspect a vessel manifest
             vessels = data_access.list_registered_vessels("dataset/vessels/")
             display_vessel_selection_list(vessels)
-            #Avery: reuse functions of task 1 for task 2
-            #valid_vessels, _ = data_access.load_vessels("dataset/vessels/")
-            #display_vessel_selection_list(vessels)
+            # Avery: reuse functions of task 1 for task 2
+            # valid_vessels, _ = data_access.load_vessels("dataset/vessels/")
+            # display_vessel_selection_list(vessels)
             vessel_input = input("Vessel name: ").strip().lower()
             vessel = operations.get_vessel_by_name(vessel_input)
             # validate vessel name input
@@ -123,7 +140,7 @@ def main():
                 else:
                     call_id = call["call_id"]
                     call_date = call["arrival_date"]
-                    # check in call_id in manifest
+                    # check call_id in manifest
                     manifest = operations.resolve_manifest(call["call_id"])
                     if not manifest:
                         print("Manifest unavailable")
@@ -222,7 +239,7 @@ def main():
             result = operations.get_sequence_for_port_call(call_id_from_user)
 
             if "error" in result:
-                print(f"Error: {result['error']}")
+                print(f"Error - {result['error']}")
             else:
                 print_stable_sequence_results(result)
 
@@ -232,7 +249,14 @@ def main():
 
         elif selected_service == 9:
             # Search incident reports
-            pass
+            query_input = input("Search keywords: ").strip()
+            if not query_input:
+                print("Error - Please enter search keywords.")
+                continue
+
+            results = operations.search_incidents(query_input)
+
+            display_incident_search_results(query_input, results)
 
         elif selected_service == 10:
             # Close console

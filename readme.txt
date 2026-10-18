@@ -2,8 +2,8 @@ HARBORFLOW PORT INTELLIGENCE CONSOLE - TEAM README
 
 Run instructions
 ----------------
-Command:
-Python version tested:
+Command: py main.py (or: python main.py)
+Python version tested: 3.14.7
 
 Team members and concrete contributions
 ---------------------------------------
@@ -11,16 +11,29 @@ Name: Linder
 Contribution:
 - Task 4 (Export a customer operations profile)
 - Task 5 (Find port calls by month)
+- Task 6
+- testing
 
 Name: Monika
 Contribution:
+- Task 2
+- Task 7
+- Task 9
+- documentation, test-strategy, testing
 
 Name: Olha
 Contribution:
+- Task 3
+- flowchart
+- testing
 
-Name (if applicable): Youyue (Avery)
+Name: Youyue (Avery)
 Contribution:
 - Task 0
+- Task 1
+- Task 8
+- code cleanup, function generalization
+- testing
 
 Architecture
 ------------

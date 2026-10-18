@@ -15,17 +15,18 @@ def load_json(path):
     with open(path, "r") as file:
         return json.load(file)
 
-# Generalize load_json(), part of load_vessels()for task 1, 
+
+# Generalize load_json(), part of load_vessels()for task 1,
 # load_every_json() for task 4
-# find_json_record(), list_registered_vessels() task 2: 
+# find_json_record(), list_registered_vessels() task 2:
 def generalised_load_json(path):
     skipped_file = 0
     contents = []
     for filename in os.listdir(path):
-        if filename.endswith('.json'):
+        if filename.endswith(".json"):
             full_path = os.path.join(path, filename)
             try:
-                with open(full_path,"r") as file:
+                with open(full_path, "r") as file:
                     content = json.load(file)
                     contents.append(content)
             except (json.JSONDecodeError, FileNotFoundError):
@@ -47,7 +48,7 @@ def load_every_json(path):
     for incident_filename in os.listdir(path):
         full_path = os.path.join(path, incident_filename)
         all_json.append(load_json(full_path))
-        return all_json
+    return all_json
 
 
 # task 1 - modified and merged with ist_registered_vessels(directory):
@@ -91,7 +92,9 @@ def find_json_record(directory, key, value):
             except json.JSONDecodeError:
                 continue
     return None
-#Avery: reuse functions of task 1 for task 2
+
+
+# Avery: reuse functions of task 1 for task 2
 def find_json_record_2(directory, key, value):
     contents, _ = generalised_load_json(directory)
     for record in contents:
@@ -154,6 +157,7 @@ def validate_vessel_input():
         valid_vessel_input = True
     return official_vessel_name, vessel_id, valid_vessel_input
 
+
 def validate_date_input():
     date_is_valid = False
     while not date_is_valid:
@@ -164,3 +168,23 @@ def validate_date_input():
         else:
             print("Error - Date must use YYYY-MM-DD")
             date_is_valid = False
+
+
+# task 9
+def is_cache_outdated(cache_path, source_dir):
+    # get the modification time of the cache file, if it exists
+    cache_time = os.path.getmtime(cache_path)
+    # check every file in the incident directory
+    for filename in os.listdir(source_dir):
+        if filename.endswith(".json"):
+            full_path = os.path.join(source_dir, filename)
+            # if file is newer -> cache is outdated
+            if os.path.getmtime(full_path) > cache_time:
+                return True
+    return False
+
+
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as file:
+        # indent=4 makes the JSON readable
+        json.dump(data, file, indent=4)

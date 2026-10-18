@@ -7,7 +7,7 @@ where practical.
 import json
 import csv
 import os
-import data_access
+import data_access, text_tools
 from datetime import datetime
 
 
@@ -266,27 +266,6 @@ def find_port_calls_by_month(month):
 
 
 # task 7
-def get_longest_stable_sequence(event_codes):
-    start = 0
-    max_start = 0
-    max_length = 0
-    last_seen = {}
-
-    for end, code in enumerate(event_codes):
-        if code in last_seen and last_seen[code] >= start:
-            start = last_seen[code] + 1
-
-        last_seen[code] = end
-        current_length = end - start + 1
-
-        if current_length > max_length:
-            max_length = current_length
-            max_start = start
-
-    longest_seq = event_codes[max_start : max_start + max_length]
-    return longest_seq, max_length
-
-
 def get_sequence_for_port_call(call_id):
     call_id = call_id.strip()
 
@@ -306,7 +285,7 @@ def get_sequence_for_port_call(call_id):
         return {"error": "Manifest contains no event data."}
 
     event_codes = manifest.get("event_codes", [])
-    sequence, length = get_longest_stable_sequence(event_codes)
+    sequence, length = text_tools.get_longest_stable_sequence(event_codes)
 
     return {
         "call_id": call_id,
@@ -315,7 +294,8 @@ def get_sequence_for_port_call(call_id):
         "length": length,
     }
 
-# task 8 
+
+# task 8
 def assess_weather_risk():
     _, vessel_id, _ = data_access.validate_vessel_input()
     reference_date = data_access.validate_date_input()
@@ -325,7 +305,100 @@ def assess_weather_risk():
     else:
         port_code = uppcoming_call["port_code"]
         arrival_date = uppcoming_call["arrival_date"]
-    
+
     row = data_access.find_csv_record("/dataset/weather.csv", "port_code", port_code)
 
 
+# task 9
+def build_incident_index():
+    index = {}
+    titles = {}
+    source_dir = "dataset/incidents"
+
+    for filename in os.listdir(source_dir):
+        if filename.endswith(".json"):
+            full_path = os.path.join(source_dir, filename)
+            try:
+                incident = data_access.load_json(full_path)
+
+                incident_id = incident["incident_id"]
+                title = incident["title"]
+                report = incident["report"]
+
+                titles[incident_id] = title
+
+                words = text_tools.tokenize(report)
+                words_processed_in_report = {}
+
+                for word in words:
+                    if word not in words_processed_in_report:
+                        if word not in index:
+                            index[word] = []
+                            index[word].append(incident_id)
+                            words_processed_in_report[word] = True
+
+            except (json.JSONDecodeError, FileNotFoundError, KeyError):
+                continue
+
+    for word in index:
+        index[word].sort()
+
+    sorted_index = {word: index[word] for word in sorted(index.keys())}
+    sorted_titles = {inc_id: titles[inc_id] for inc_id in sorted(titles.keys())}
+    return {"index": sorted_index, "titles": sorted_titles}
+
+
+def get_incident_index():
+    cache_path = "dataset/incident-index.json"
+    source_dir = "dataset/incidents"
+
+    # check if exists
+    if not os.path.exists(cache_path):
+        return rebuild_and_save_index(cache_path, source_dir)
+    # check if malformed
+    try:
+        cached_data = data_access.load_json(cache_path)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return rebuild_and_save_index(cache_path, source_dir)
+    # check if older
+    if data_access.is_cache_outdated(cache_path, source_dir):
+        return rebuild_and_save_index(cache_path, source_dir)
+    return cached_data
+
+
+def rebuild_and_save_index(cache_path, source_dir):
+    fresh_index = build_incident_index()
+    data_access.save_json(cache_path, fresh_index)
+    return fresh_index
+
+
+def search_incidents(
+    query,
+):  # return a sorted list of matches: (incident_id, score, title)
+    data = get_incident_index()
+    index = data["index"]
+    titles = data["titles"]
+
+    query_words = set(text_tools.tokenize(query))
+
+    if not query_words:
+        return []
+
+    # incident_id -> count of matching distinct query words
+    scores = {}
+    for word in query_words:
+        if word in index:
+            # incident that contains this word gets +1 point
+            for incident_id in index[word]:
+                scores[incident_id] = scores.get(incident_id, 0) + 1
+
+    # filter+rank :scores dictionary into a list of tuples: (incident_id, score)
+    results = []
+    for incident_id, score in scores.items():
+        if score > 0:
+            title = titles.get(incident_id, "Unknown Title")
+            results.append((incident_id, score, title))
+
+    results.sort(key=lambda x: (-x[1], x[0]))
+
+    return results
