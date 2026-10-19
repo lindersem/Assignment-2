@@ -174,7 +174,7 @@ def main():
                     )
 
                 print("-" * 80)
-                print("Category Totals:")
+                print("Category totals:")
                 for category, count in result["counts"].items():
                     print(f"- {category}: {count}")
 
