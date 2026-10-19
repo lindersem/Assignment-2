@@ -217,13 +217,8 @@ def main():
                 try:
                     incident_number = int(input("Incident number: "))
                     if incident_number > 0 and incident_number <= len(sorted_incidents):
-                        sanitized_text = text_tools.sanitize(
-                            sorted_incidents[incident_number - 1]["report"]
-                        )
-                        if (
-                            sanitized_text
-                            == sorted_incidents[incident_number - 1]["report"]
-                        ):
+                        sanitized_text = text_tools.sanitize(sorted_incidents[incident_number - 1]["report"])
+                        if sanitized_text == sorted_incidents[incident_number - 1]["report"]:
                             print("Incident contains no share-sensitive identifiers.")
                         else:
                             file_path = f"exports/sanitized/{sorted_incidents[incident_number-1]["incident_id"]}-sanitized.txt"
