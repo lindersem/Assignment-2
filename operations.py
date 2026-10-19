@@ -11,25 +11,7 @@ import data_access, text_tools
 from datetime import datetime
 
 
-# task 2 (Avery: Move to dataaccess?)
-def get_vessel_by_name(name):
-    vessel = data_access.find_json_record("dataset/vessels", "name", name)
-    if vessel:
-        return vessel
-    return None
-
-
-# task 2 (Avery: Move to dataaccess?)
-def is_valid_date(date_string):  # YYYY-MM-DD
-    try:
-        datetime.strptime(date_string, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
-
-
 # task 2
-# Avery: modified as find_upcoming_calls
 def find_earliest_call(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
@@ -141,19 +123,19 @@ def process_priority_cargo(call_id_input):
 def export_customer_operations_profile(customer_input):
     customer_input = customer_input.strip().lower()
 
-    # --- Part 2: Find all shipments for this customer, return list of dictionaries---
+    # Find all shipments for this customer, return list of dictionaries
     matching_shipments = []
     shipments = data_access.load_every_json("dataset/shipments")
     for shipment in shipments:
         if shipment["customer"].strip().lower() == customer_input:
             matching_shipments.append(shipment)
 
-    # --- Part 3: Validate if any were found ---
+    # Validate if any were found
     if not matching_shipments:  # if list is empty
         print("Customer not found.")
         return
 
-    # --- Part 4: Calculate profile statistics ---
+    # Calculate profile statistics
     shipment_count = len(matching_shipments)
     total_weight_kg = 0.0
     express_count = 0
@@ -177,11 +159,6 @@ def export_customer_operations_profile(customer_input):
         "destinations": clean_destinations,
     }
 
-    # --- Part 5: Write exports, if customer exists update or append to customer-profiles.csv ---
-    # Use an in-memory list to update the CSV safely:
-    # Text files on disk cannot be edited in-place when row lengths change.
-    # As required by the spec, we read existing rows into memory, replace
-    # matching customer data (or keep other customers untouched), and rewrite safely.
     existing_rows = []
     customer_found = False
     csv_path = "exports/customer-profiles.csv"
@@ -196,7 +173,7 @@ def export_customer_operations_profile(customer_input):
                 else:
                     existing_rows.append(row)
 
-    # If brand new customer, append their row to the list
+    # If new customer, append row to the list
     if not customer_found:
         existing_rows.append(customer_dictionary_output)
 
@@ -223,19 +200,16 @@ def sort_by_date_and_vessel(call):  # gives .sort() the functions so it can sort
 
 
 def find_port_calls_by_month(month):
-    # --- PART 1: LOAD DATA ---
     all_calls = data_access.load_csv("dataset/port_calls.csv")
     matching_calls = []
 
-    # --- PART 2: FILTER CALLS FOR THIS MONTH ---
     for call in all_calls:
         date_string = call["arrival_date"]
         vessel_id = call["vessel_id"]
         # Skip bad dates
-        if not is_valid_date(date_string):
+        if not data_access.is_valid_date(date_string):
             continue
 
-        # Look up the ship
         vessel = data_access.find_json_record("dataset/vessels", "vessel_id", vessel_id)
         if vessel is None:
             continue
@@ -246,15 +220,12 @@ def find_port_calls_by_month(month):
             call["vessel_name"] = vessel["name"]
             matching_calls.append(call)
 
-    # --- PART 3: CHECK IF EMPTY ---
     if len(matching_calls) == 0:
         print("No port calls found.")
         return None
 
-    # --- PART 4: SORT by using function---
     matching_calls.sort(key=sort_by_date_and_vessel)
 
-    # --- PART 5: PRINT RESULTS ---
     month_name = datetime(2026, month, 1).strftime("%B")
     print(f"Port calls in {month_name}:")
     for call in matching_calls:
@@ -301,6 +272,8 @@ def find_upcoming_calls(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
     filtered_calls = []
+
+
 def find_upcoming_calls(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
@@ -317,14 +290,10 @@ def find_upcoming_calls(vessel_id, reference_date):  # date on or after
         if arrival_date >= datetime.strptime(reference_date, "%Y-%m-%d").date():
             filtered_calls.append(call)
 
-
     if not filtered_calls:
         return None
     filtered_calls.sort(key=lambda x: (x["arrival_date"], x["call_id"]))
     return filtered_calls
-
-
-
 
     if not filtered_calls:
         return None
@@ -333,25 +302,29 @@ def find_upcoming_calls(vessel_id, reference_date):  # date on or after
 
 
 def assess_weather_risk():
-    official_vessel_name, vessel_id, valid_vessel_input = data_access.validate_vessel_input()
-    
+    official_vessel_name, vessel_id, valid_vessel_input = (
+        data_access.validate_vessel_input()
+    )
+
     if not valid_vessel_input:
         return None
-    
+
     reference_date = data_access.validate_date_input()
     uppcoming_calls = find_upcoming_calls(vessel_id, reference_date)
 
     if not uppcoming_calls:
         print("No upcoming port calls found")
         return None
-    
+
     weather_rows = data_access.load_csv("dataset/weather.csv")
     results = []
 
     for upcoming_call in uppcoming_calls:
         port_code = upcoming_call["port_code"]
         arrival_date = upcoming_call["arrival_date"]
-        display_arrival_date = datetime.strptime(arrival_date,"%Y-%m-%d").strftime("%d %B %Y")
+        display_arrival_date = datetime.strptime(arrival_date, "%Y-%m-%d").strftime(
+            "%d %B %Y"
+        )
 
         row = None
         for weather in weather_rows:
@@ -384,20 +357,20 @@ def assess_weather_risk():
             recommendations.append("Prepare covered handling. ")
         if wind_kmh < 45 and wave_height_m < 2.5 and precipitation_mm < 8:
             recommendations.append("Normal operating plan.")
-        
-        results.append({
-            "vessel_name": official_vessel_name,
-            "port_code": port_code,
-            "arrival_date": display_arrival_date,
-            "wind_kmh": wind_kmh,
-            "wave_height_m": wave_height_m,
-            "precipitation_mm": precipitation_mm,
-            "recommendations": recommendations
-        })
+
+        results.append(
+            {
+                "vessel_name": official_vessel_name,
+                "port_code": port_code,
+                "arrival_date": display_arrival_date,
+                "wind_kmh": wind_kmh,
+                "wave_height_m": wave_height_m,
+                "precipitation_mm": precipitation_mm,
+                "recommendations": recommendations,
+            }
+        )
 
     return results
-
-
 
 
 # task 9
@@ -425,8 +398,8 @@ def build_incident_index():
                     if word not in words_processed_in_report:
                         if word not in index:
                             index[word] = []
-                            index[word].append(incident_id)
-                            words_processed_in_report[word] = True
+                        index[word].append(incident_id)
+                        words_processed_in_report[word] = True
 
             except (json.JSONDecodeError, FileNotFoundError, KeyError):
                 continue

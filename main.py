@@ -121,38 +121,32 @@ def main():
             # Inspect a vessel manifest
             vessels = data_access.list_registered_vessels("dataset/vessels/")
             display_vessel_selection_list(vessels)
-            # Avery: reuse functions of task 1 for task 2
-            # valid_vessels, _ = data_access.load_vessels("dataset/vessels/")
-            # display_vessel_selection_list(vessels)
             vessel_input = input("Vessel name: ").strip().lower()
-            vessel = operations.get_vessel_by_name(vessel_input)
-            # validate vessel name input
+            vessel = data_access.get_vessel_by_name(vessel_input)
             if not vessel:
-                print("Vessel not found")
+                print("Vessel not found.")
                 continue
             else:
                 official_vessel_name = vessel["name"]
                 vessel_id = vessel["vessel_id"]
-                # validate date input
                 date_is_valid = False
                 while not date_is_valid:
                     date_input = input("Reference date: ").strip()
-                    if operations.is_valid_date(date_input):
+                    if data_access.is_valid_date(date_input):
                         date_is_valid = True
                     else:
                         print("Error - Date must use YYYY-MM-DD")
 
                 call = operations.find_earliest_call(vessel_id, date_input)
                 if not call:
-                    print("No upcoming port calls found")
+                    print("No upcoming port calls found.")
                     continue
                 else:
                     call_id = call["call_id"]
                     call_date = call["arrival_date"]
-                    # check call_id in manifest
                     manifest = operations.resolve_manifest(call["call_id"])
                     if not manifest:
-                        print("Manifest unavailable")
+                        print("Manifest unavailable.")
                         continue
                     else:
                         output_vessel_manifest(
@@ -217,16 +211,21 @@ def main():
                 try:
                     incident_number = int(input("Incident number: "))
                     if incident_number > 0 and incident_number <= len(sorted_incidents):
-                        sanitized_text = text_tools.sanitize(sorted_incidents[incident_number - 1]["report"])
-                        if sanitized_text == sorted_incidents[incident_number - 1]["report"]:
+                        sanitized_text = text_tools.sanitize(
+                            sorted_incidents[incident_number - 1]["report"]
+                        )
+                        if (
+                            sanitized_text
+                            == sorted_incidents[incident_number - 1]["report"]
+                        ):
                             print("Incident contains no share-sensitive identifiers.")
                         else:
                             file_path = f"exports/sanitized/{sorted_incidents[incident_number-1]["incident_id"]}-sanitized.txt"
 
-                            # 1. Extract the directory portion and create it if missing
+                            # extract the directory portion and create it if missing
                             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-                            # 2. Open and create the file
+                            # open and create the file
                             with open(file_path, "w") as f:
                                 f.write(f"{sanitized_text}")
                         break
@@ -252,7 +251,7 @@ def main():
 
         elif selected_service == 9:
             # Search incident reports
-            query_input = input("Search keywords: ").strip()
+            query_input = input("Search incident reports: ").strip()
             if not query_input:
                 print("Error - Please enter search keywords.")
                 continue

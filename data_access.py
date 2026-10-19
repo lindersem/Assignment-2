@@ -16,9 +16,6 @@ def load_json(path):
         return json.load(file)
 
 
-# Generalize load_json(), part of load_vessels()for task 1,
-# load_every_json() for task 4
-# find_json_record(), list_registered_vessels() task 2:
 def generalised_load_json(path):
     skipped_file = 0
     contents = []
@@ -51,7 +48,7 @@ def load_every_json(path):
     return all_json
 
 
-# task 1 - modified and merged with ist_registered_vessels(directory):
+# task 1
 def load_vessels(directory):
     valid_vessels = []
     required_keys = ["vessel_id", "name", "imo", "capacity_teu"]
@@ -94,7 +91,6 @@ def find_json_record(directory, key, value):
     return None
 
 
-# Avery: reuse functions of task 1 for task 2
 def find_json_record_2(directory, key, value):
     contents, _ = generalised_load_json(directory)
     for record in contents:
@@ -108,7 +104,6 @@ def find_json_record_2(directory, key, value):
 
 
 # task 2
-# Avery: Repeat task 1
 def list_registered_vessels(directory):
     valid_vessels = []
     required_keys = ["vessel_id", "name", "imo", "capacity_teu"]
@@ -126,7 +121,6 @@ def list_registered_vessels(directory):
     return valid_vessels
 
 
-# task 2 (Avery: Move to dataaccess?)
 def get_vessel_by_name(name):
     vessel = data_access.find_json_record("dataset/vessels", "name", name)
     if vessel:
@@ -134,7 +128,6 @@ def get_vessel_by_name(name):
     return None
 
 
-# task 2 (Avery: Move to dataaccess?)
 def is_valid_date(date_string):  # YYYY-MM-DD
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
@@ -143,7 +136,7 @@ def is_valid_date(date_string):  # YYYY-MM-DD
         return False
 
 
-# task 8 (sharing a part from task2)
+# task 8
 def validate_vessel_input():
     vessel_input = input("Vessel name: ").strip().lower()
     vessel = find_json_record("dataset/vessels", "name", vessel_input)
