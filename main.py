@@ -228,6 +228,7 @@ def main():
                             # open and create the file
                             with open(file_path, "w") as f:
                                 f.write(f"{sanitized_text}")
+                            print(f"Incident sanitized: {file_path}")
                         break
                     else:
                         print("Error - Select a listed incident.")
