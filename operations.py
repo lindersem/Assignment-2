@@ -301,19 +301,30 @@ def find_upcoming_calls(vessel_id, reference_date):  # date on or after
     all_calls = data_access.load_csv("dataset/port_calls.csv")
 
     filtered_calls = []
+def find_upcoming_calls(vessel_id, reference_date):  # date on or after
+    all_calls = data_access.load_csv("dataset/port_calls.csv")
+
+    filtered_calls = []
     for call in all_calls:
-        # exclude invalid date 260230
+
+        if call.get("vessel_id") != vessel_id:
+            continue
         try:
             arrival_date = datetime.strptime(call["arrival_date"], "%Y-%m-%d").date()
         except ValueError:
             print(f"Invalid data: Arrival date {call['arrival_date']}")
             continue
-
-        if (
-            call.get("vessel_id") == vessel_id
-            and arrival_date >= datetime.strptime(reference_date, "%Y-%m-%d").date()
-        ):
+        if arrival_date >= datetime.strptime(reference_date, "%Y-%m-%d").date():
             filtered_calls.append(call)
+
+
+    if not filtered_calls:
+        return None
+    filtered_calls.sort(key=lambda x: (x["arrival_date"], x["call_id"]))
+    return filtered_calls
+
+
+
 
     if not filtered_calls:
         return None
