@@ -91,18 +91,6 @@ def find_json_record(directory, key, value):
     return None
 
 
-def find_json_record_2(directory, key, value):
-    contents, _ = generalised_load_json(directory)
-    for record in contents:
-        if (
-            record
-            and record.get(key)
-            and str(record.get(key)).lower() == str(value).lower()
-        ):
-            return record
-    return None
-
-
 # task 2
 def list_registered_vessels(directory):
     valid_vessels = []
